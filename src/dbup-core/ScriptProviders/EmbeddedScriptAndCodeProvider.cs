@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using DbUp.Engine;
 using DbUp.Engine.Transactions;
 
@@ -60,7 +61,7 @@ namespace DbUp.ScriptProviders
             this.assembly = assembly;
             this.filter = codeScriptFilter ?? filter;
             this.sqlScriptOptions = sqlScriptOptions;
-            embeddedScriptProvider = new EmbeddedScriptProvider(assembly, filter);
+            embeddedScriptProvider = new EmbeddedScriptProvider(assembly, filter, Encoding.UTF8, sqlScriptOptions);
         }
 
         IEnumerable<SqlScript> ScriptsFromScriptClasses(IConnectionManager connectionManager)

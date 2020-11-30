@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
 using DbUp.Engine;
 using DbUp.Engine.Output;
 using DbUp.ScriptProviders;
+using DbUp.Support;
 using DbUp.Tests.TestInfrastructure;
 using NSubstitute;
 using Shouldly;
@@ -85,6 +87,37 @@ namespace DbUp.Tests.ScriptProvider
             public void it_should_only_return_the_sql_scripts()
             {
                 scriptsToExecute.Length.ShouldBe(9);
+            }
+        }
+
+        public class when_options_are_provided : SpecificationFor<EmbeddedScriptAndCodeProvider>
+        {
+            SqlScript[] scriptsToExecute;
+
+            public override EmbeddedScriptAndCodeProvider Given()
+            {
+                var list = Assembly.GetExecutingAssembly().GetManifestResourceNames();
+
+                return new EmbeddedScriptAndCodeProvider(Assembly.GetExecutingAssembly(),
+                    x => x.StartsWith("dbup-tests.TestScripts.Folder1."), new SqlScriptOptions { ScriptType = ScriptType.RunAlways, RunGroupOrder = 1 });
+            }
+
+            protected override void When()
+            {
+                var testConnectionManager = new TestConnectionManager(Substitute.For<IDbConnection>());
+                testConnectionManager.OperationStarting(new ConsoleUpgradeLog(), new List<SqlScript>());
+                scriptsToExecute = Subject.GetScripts(testConnectionManager).ToArray();
+            }
+
+
+            [Then]
+            public void it_should_respect_the_provided_settings()
+            {
+                foreach (var script in scriptsToExecute)
+                {
+                    script.SqlScriptOptions.RunGroupOrder.ShouldBe(1);
+                    script.SqlScriptOptions.ScriptType.ShouldBe(ScriptType.RunAlways);
+                }
             }
         }
     }
